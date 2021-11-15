@@ -1,0 +1,83 @@
+NLP Examples in Console
+
+### Text Classification Examples
+
+POST _ml/trained_models/distilbert-base-uncased-finetuned-sst-2-english/deployment/_infer 
+{
+  "docs": { "text_field": "I didn't like the soundtrack from the movie Dune"}
+}
+
+POST _ml/trained_models/distilbert-base-uncased-finetuned-sst-2-english/deployment/_infer 
+{
+  "docs": { "text_field": "That movie was awesome!"}
+}
+
+POST _ml/trained_models/distilbert-base-uncased-finetuned-sst-2-english/deployment/_infer 
+{
+  "docs": { "text_field": "Temperartures are average this year"}
+}
+
+### NER Examples
+
+POST _ml/trained_models/dslim__bert-base-ner/deployment/_infer 
+{
+  "docs": { "text_field": "This is a pretty low quality and generic case study for Apple Inc with Intel"}
+}
+
+POST _ml/trained_models/dslim__bert-base-ner/deployment/_infer 
+{
+  "docs": { "text_field": "My name is Bob Marley and I work for Elastic which was founded in Amsterdam."}
+}
+
+POST _ml/trained_models/dslim__bert-base-ner/deployment/_infer 
+{
+  "docs": { "text_field": "European authorities fined Google a record $5.1 billion on Wednesday"}
+}
+
+### Zero Shot Classification Examples
+
+POST _ml/trained_models/typeform__distilbert-base-uncased-mnli/deployment/_infer
+{
+  "docs": [
+    {
+      "text_field": "Water is coming through the ceiling!"
+    }
+  ],
+  "inference_config": {
+    "zero_shot_classification": {
+      "labels": [
+        "emergency",
+        "plumbing",
+        "home",
+        "finance",
+        "casual",
+        "swimwear",
+        "electricals",
+        "car",
+        "insurance",
+        "mindfulness"
+      ],
+      "multi_label": true
+    }
+  }
+}
+
+POST _ml/trained_models/typeform__distilbert-base-uncased-mnli/deployment/_infer
+{
+  "docs": [
+    {
+      "text_field": "This is a very happy person"
+    }
+  ],
+  "inference_config": {
+    "zero_shot_classification": {
+      "labels": [
+        "glad",
+        "sad",
+        "bad",
+        "rad"
+      ],
+      "multi_label": false
+    }
+  }
+}
