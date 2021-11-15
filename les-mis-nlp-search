@@ -1,0 +1,77 @@
+
+PUT les-miserable-embedded
+{
+  "mappings": {
+    "properties": {
+      "ml": {
+        "properties": {
+          "inference": {
+            "properties": {
+              "model_id": {
+                "type": "keyword"
+              },
+              "predicted_value": {
+                "type": "dense_vector",
+                "dims": 384,
+                "index": true,
+                "similarity": "l2_norm"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Useful setup if required
+PUT _ingest/pipeline/embed-les-mis
+{
+  "description" : "embed pipeline",
+    "processors" : [
+      {
+        "inference" : {
+          "model_id" : "sentence-transformers__msmarco-minilm-l-12-v3",
+          "field_map": {
+            "paragraph": "text_field"
+          }
+        }
+      },
+      {
+        "set" : {
+          "field" : "timestamp",
+          "value" : "{{_ingest.timestamp}}"
+        }
+      }
+    ]
+}
+
+POST _reindex
+{
+  "source": {
+    "index": "les-mis"
+  },
+  "dest": {
+    "index": "les-miserable-embedded",
+    "pipeline": "embed-les-mis"
+  }
+}
+
+POST _ml/trained_models/sentence-transformers__msmarco-minilm-l-12-v3/deployment/_infer
+{
+  "docs": [{"text_field": "What was Jean Valjean prisoner number?"}]
+}
+
+GET les-miserable-embedded/_search?size=1
+GET les-miserable-embedded
+
+POST les-miserable-embedded/_knn_search
+{
+  "_source": ["paragraph", "line"],
+  "knn": {
+    "field": "ml.inference.predicted_value",
+    "k": 5,
+    "num_candidates": 10,
+    "query_vector": # Put query vector here
+  }
+}
