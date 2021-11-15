@@ -1,0 +1,41 @@
+# NER pipeline
+PUT _ingest/pipeline/les-mis-ner
+{
+  "description": "NER pipeline",
+    "processors" : [
+      {
+        "inference" : {
+          "model_id" : "elastic__distilbert-base-cased-finetuned-conll03-english",
+          "target_field" : "_ml.ner",
+          "field_map": {
+            "paragraph": "text_field"
+          }
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "if": "return (ctx['_ml']['ner'].containsKey('entities'))",
+          "source" : "Map tags = new HashMap(); for (item in ctx['_ml']['ner']['entities']) { if (!tags.containsKey(item.class_name)) tags[item.class_name] = new HashSet(); tags[item.class_name].add(item.entity);} ctx['tags'] = tags;"
+        }
+      },
+      {
+        "set" : {
+          "field" : "ingest_timestamp",
+          "value" : "{{_ingest.timestamp}}"
+        }
+      }
+    ]
+}
+
+# NER reindex to les-mis-entities
+POST _reindex
+{
+  "source": {
+    "index": "les-mis"
+  },
+  "dest": {
+    "index": "les-mis-entities",
+    "pipeline": "les-mis-ner"
+  }
+}
