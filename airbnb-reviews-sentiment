@@ -1,0 +1,32 @@
+PUT _ingest/pipeline/airbnb-twincities-reviews
+{
+  "description": "review-pipeline",
+    "processors" : [
+      {
+        "inference" : {
+          "model_id" : "distilbert-base-uncased-finetuned-sst-2-english",
+          "field_map": {
+            "comments": "text_field"
+          }
+        }
+      },
+      {
+        "set" : {
+          "field" : "ingest_timestamp",
+          "value" : "{{_ingest.timestamp}}"
+        }
+      }
+    ]
+}
+
+
+POST _reindex
+{
+  "source": {
+    "index": "airbnb-twincities-reviews"
+  },
+  "dest": {
+    "index": "airbnb-reviews-feedback",
+    "pipeline": "airbnb-twincities-reviews"
+  }
+}
