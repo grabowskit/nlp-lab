@@ -1,6 +1,6 @@
-PUT _ingest/pipeline/airbnb-twincities-reviews
+PUT _ingest/pipeline/airbnb-twincities-review-sentiment
 {
-  "description": "review-pipeline",
+  "description": "review-sentiment-pipeline",
     "processors" : [
       {
         "inference" : {
@@ -26,7 +26,7 @@ POST _reindex
     "index": "airbnb-twincities-reviews"
   },
   "dest": {
-    "index": "airbnb-reviews-feedback",
-    "pipeline": "airbnb-twincities-reviews"
+    "index": "airbnb-reviews-sentiment",
+    "pipeline": "airbnb-twincities-review-sentiment"
   }
 }
