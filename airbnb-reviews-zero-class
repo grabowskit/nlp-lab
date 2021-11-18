@@ -1,0 +1,48 @@
+PUT _ingest/pipeline/airbnb-twincities-reviews-zero-class
+{
+  "description": "zero-class pipeline",
+    "processors" : [
+      {
+        "inference" : {
+          "model_id" : "typeform__distilbert-base-uncased-mnli",
+          "inference_config": {
+            "zero_shot_classification": {
+              "labels": [
+                "location",
+                "comfortable",
+                "quiet",
+                "unusual",
+                "clean"
+              ],
+          "multi_label": true }},
+          "field_map": {
+            "comments": "text_field"
+           }
+         }
+      },
+      {
+        "set" : {
+          "field" : "ingest_timestamp",
+          "value" : "{{_ingest.timestamp}}"
+        }
+      },
+      {
+        "script" : {
+          "lang" : "painless",
+          "if": "return (ctx['ml']['inference'].containsKey('top_classes'))",
+          "source" : "for (item in ctx['ml']['inference']['top_classes']) { ctx[item.class_name] = item.class_score;}"
+        }
+      }
+    ]
+}
+
+POST _reindex
+{
+  "source": {
+    "index": "airbnb-twincities-reviews"
+  },
+  "dest": {
+    "index": "airbnb-reviews-zero-class",
+    "pipeline": "airbnb-twincities-reviews-zero-class"
+  }
+}
