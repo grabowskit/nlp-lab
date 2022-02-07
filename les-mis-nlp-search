@@ -75,3 +75,8 @@ POST les-miserable-embedded/_knn_search
     "query_vector": # Put query vector here
   }
 }
+
+POST _ml/trained_models/sentence-transformers__msmarco-minilm-l-12-v3/deployment/_infer
+{
+  "docs": [{"text_field": "How much could Jean Valjean sell the candlesticks?"}]
+}
