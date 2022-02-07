@@ -1,48 +1,72 @@
 PUT _ingest/pipeline/airbnb-twincities-reviews-zero-class
 {
-  "description": "zero-class pipeline",
-    "processors" : [
-      {
-        "inference" : {
-          "model_id" : "typeform__distilbert-base-uncased-mnli",
-          "inference_config": {
-            "zero_shot_classification": {
-              "labels": [
-                "location",
-                "comfortable",
-                "quiet",
-                "unusual",
-                "clean"
-              ],
-          "multi_label": true }},
-          "field_map": {
-            "comments": "text_field"
-           }
-         }
-      },
-      {
-        "set" : {
-          "field" : "ingest_timestamp",
-          "value" : "{{_ingest.timestamp}}"
-        }
-      },
-      {
-        "script" : {
-          "lang" : "painless",
-          "if": "return (ctx['ml']['inference'].containsKey('top_classes'))",
-          "source" : "for (item in ctx['ml']['inference']['top_classes']) { ctx[item.class_name] = item.class_score;}"
+  "processors": [
+    {
+      "inference": {
+        "model_id": "typeform__distilbert-base-uncased-mnli",
+        "inference_config": {
+          "zero_shot_classification": {
+            "labels": [
+              "location",
+              "comfortable",
+              "quiet",
+              "unusual",
+              "clean"
+            ],
+            "multi_label": true
+          }
+        },
+        "field_map": {
+          "comments": "text_field"
         }
       }
-    ]
+    },
+    {
+      "set": {
+        "field": "ingest_timestamp",
+        "value": "{{_ingest.timestamp}}"
+      }
+    },
+    {
+      "script": {
+        "lang": "painless",
+        "if": "return (ctx['ml']['inference'].containsKey('top_classes'))",
+        "source": "for (item in ctx['ml']['inference']['top_classes']) { ctx[item.class_name] = item.class_score;}"
+      }
+    }
+  ],
+  "on_failure": [
+    {
+      "set": {
+        "description": "Index document to 'failed-<index>'",
+        "field": "_index",
+        "value": "failed-inference"
+      }
+    },
+    {
+      "set": {
+        "description": "Set error message",
+        "field": "ml.inference_failure",
+        "value": "{{_ingest.on_failure_message}}"
+      }
+    }
+  ]
 }
+
+# increase thread count
+# stop the deployment
+POST  _ml/trained_models/typeform__distilbert-base-uncased-mnli/deployment/_stop?force
+# restart with more threads
+POST  _ml/trained_models/typeform__distilbert-base-uncased-mnli/deployment/_start?inference_threads=4
 
 POST _reindex
 {
   "source": {
-    "index": "airbnb-twincities-reviews"
+    "index": "airbnb-twincities-reviews",
+    "size": 50 
   },
   "dest": {
-    "index": "airbnb-reviews-zero-class",
+    "index": "airbnb-reviews-class",
     "pipeline": "airbnb-twincities-reviews-zero-class"
   }
 }
