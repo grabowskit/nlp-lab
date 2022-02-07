@@ -1,5 +1,17 @@
 NLP Examples in Console
 
+### Fill Mask examples
+
+POST _ml/trained_models/bert-base-uncased/deployment/_infer 
+{
+  "docs": { "text_field": "Paris is the [MASK] of France."}
+}
+
+POST _ml/trained_models/bert-base-uncased/deployment/_infer 
+{
+  "docs": { "text_field": "Amsterdam is a city in the [MASK]."}
+}
+
 ### Text Classification Examples
 
 POST _ml/trained_models/distilbert-base-uncased-finetuned-sst-2-english/deployment/_infer 
